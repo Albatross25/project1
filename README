@@ -1,0 +1,24 @@
+High Level approach:
+Run the Makefile to get executable permissions
+The File has to be executed with te below format
+./client <-p port> <-s> [hostname] [nuid]
+1. sys module used to store the arguments value in sys.argv[] and based on the values passed few decisions are made. When correct port is not entered, an error message is thrown and program is terminated.The correct format is ./client <-p port> <-s> [hostname] [nuid] 
+2. TCP socket without SSL is created  when -p is entered without -s. TCP socket with SSL is created when -s is entered. SSL and socket modules are used for this.
+3. A Try And Except loop was used to handle the exception of socket and SSL modules. When an exception is thrown, the message is printed and program is terminated.
+4. Once connection is established with the server, Client sends Hello message as per the protocol: cs5700spring2016 HELLO [nuid]\n
+5.Inside the while loop, as long as the connection is there, the server message is parsed and checked for the STATUS word, if its present then the operator passed is checked. Based on the operator the computation is made and the solution is sent to the server as per protocol. cs5700spring2016 [solution]’\n’.
+6. When the server sends a Message as BYE, the secret_flag is printed
+7. If the server does not respond with messages complying to the protocol, an error message is thrown and connection is closed	
+
+Challenges Faced:
+1. passing the arguments form the command line with argparse module was truncating the  leading 0's in nuid. Later sys module was used.
+2. Giving permissions with Makefile
+
+Overview of testing the code:
+1. Code was executed without any optional arguments.The execution was successful.
+2. Code was executed without -s parameter and just -p and port, the execution was successfull.
+3. Code was executed with -p -s hostname neuid,It was successfull.
+4. code was executed with incorrect hostname, error was thrown and program ended.
+5. code was executed with wrong port number, error was thrown.
+
+

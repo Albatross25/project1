@@ -1,0 +1,110 @@
+#!/usr/bin/python
+import socket,sys,ssl
+
+#if both -p, port and -s are passed along with hostname and nuid, then port 27994 is assigned
+if(sys.argv[1]=='-p' and sys.argv[3]=='-s'):
+        if(sys.argv[2]!='27994' or sys.argv[2]=='-s'):
+                print "ERROR: SSL port has to be 27994"
+                sys.exit()
+	server_port=int(sys.argv[2])
+        server_name=sys.argv[4]
+        nuid=sys.argv[5]
+
+#if only -p and port are sent along with hostname and nuid, then non ssl port is used
+elif(sys.argv[1]=='-p'and sys.argv[3]!='-s'):
+        if(sys.argv[2]!='27993' and sys.argv[2]=='-s'):
+                print "Error: Enter server port 27994"
+                sys.exit()
+	elif(sys.argv[2]!='27993' and sys.argv[2]!='-s'):
+                print "ERROR: Enter port 27993"
+                sys.exit()
+	server_port=int(sys.argv[2])
+        server_name=sys.argv[3]
+        nuid=sys.argv[4]
+
+#if -s is passed along with hostname and nuid, then ssl port is used    
+elif(sys.argv[1]=='-s'):
+        server_port=27994
+        server_name=sys.argv[2]
+        nuid=sys.argv[3]
+
+#if only hostname and nuid are passed, non SSL port is used     
+else:
+        server_name=sys.argv[1]
+        server_port=27993
+        nuid=sys.argv[2]
+
+#creating TCP socket over SSL when -s optional argument is passed      
+if server_port==27994:
+
+        socket_client=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        socket_SSL=ssl.wrap_socket(socket_client)
+
+#creating TCP socket without SSL when -p or no optional arguments are passed    
+elif server_port==27993:
+
+        socket_SSL=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+#checking for exceptions from server if TCP connection fails
+try:
+
+        socket_SSL.connect((server_name,server_port))
+        socket_SSL.settimeout(10)
+except socket.error as error:
+        print 'bind failed. Error code: ' + str(error[0]) + ' message ' + error[1]
+        sys.exit()
+#connection is established and message is sent to server as per protocol
+message="cs5700spring2016 HELLO "+nuid+"\n"
+
+socket_SSL.send(message)
+
+while 1:
+#server messages are received and the message is split and based on operator received and if message TYPE is STATUS,the expression is solved and value is returned 
+                server_message= socket_SSL.recv(256)
+
+                message_split=server_message.split()
+
+                if message_split[1]=='STATUS':
+
+                        if message_split[3]=='+' and  message_split[2]>=1 or message_split[2]<=1000 and message_split[4]>=1 or message_split[4]<=1000:
+                                sum=int(message_split[2])+int(message_split[4])
+                                sum_message="cs5700spring2016 "+str(sum)+'\n'
+                                socket_SSL.send(sum_message)
+                                continue
+
+                        elif message_split[3]=='-'and message_split[2]>=1 or message_split[2]<=1000 and message_split[4]>=1 or message_split[4]<=1000:
+                                difference=int(message_split[2])-int(message_split[4])
+                                d_message="cs5700spring2016 "+str(difference)+'\n'
+                                socket_SSL.send(d_message)
+                                continue
+
+                        elif message_split[3]=='*'and message_split[2]>=1 or message_split[2]<=1000 and message_split[4]>=1 or message_split[4]<=1000:
+                                product=int(message_split[2])*int(message_split[4])
+                                p_message="cs5700spring2016 "+str(product)+'\n'
+                                socket_SSL.send(p_message)
+                                continue
+
+                        elif message_split[3]=='/'and message_split[2]>=1 or message_split[2]<=1000 and message_split[4]>=1 or message_split[4]<=1000:
+                                Q=int(message_split[2])/int(message_split[4])
+				Q_message="cs5700spring2016 "+str(Q)+'\n'
+                                socket_SSL.send(Q_message)
+                                continue
+
+                        else:
+                                print "Error :server not following the protocol"
+                                break
+                        continue
+#if  message type is BYE, the seceret key received from the server is printed
+                elif message_split[2]=='BYE':
+
+                        print message_split[1]
+                        break
+
+#if server is not following the protocol, error message is printed              
+                else:
+                        print "Error: server not following the protocol"
+
+                        break
+
+socket_SSL.close()
+
+
